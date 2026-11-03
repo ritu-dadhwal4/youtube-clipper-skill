@@ -10,7 +10,7 @@ YELLOW = (254, 213, 12)
 
 def run(cmd, **kw):
     """Run a command, stop with a clear message if it fails."""
-    r = subprocess.run(cmd, capture_output=True, text=True, **kw)
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", **kw)
     if r.returncode != 0:
         sys.exit(f"Command failed: {' '.join(map(str, cmd))}\n{r.stderr[-1500:]}")
     return r

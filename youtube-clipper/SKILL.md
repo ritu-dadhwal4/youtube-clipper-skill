@@ -35,7 +35,9 @@ One AskUserQuestion call, only for what the user did not already say:
 
 ## Step 3 - Transcribe
 
-`python3 scripts/transcribe.py <folder> --lang en` (or `hi`, or `auto`; non-English needs the multilingual model, `--download-model small`). For Hinglish add `--prompt "Aaj hum startup ke baare mein baat karenge."` to nudge Roman spelling. Takes roughly 5-10 min per hour of video. Tell the user it is running and that they can step away.
+**For a YouTube link, try YouTube's own captions first** (instant, no download, and much better than whisper for Hindi/Hinglish): `yt-dlp --list-subs "<link>"` shows what exists; then `python3 scripts/transcribe.py <folder> --youtube-captions en` (or `hi-orig`, the original-language track). The captions are auto-generated, so spelling can be off; the time of every word is real.
+
+**No captions, or a file instead of a link: whisper.** `python3 scripts/transcribe.py <folder> --lang en` (or `hi`, or `auto`; non-English needs the multilingual model, `--download-model small`). Takes roughly 5-10 min per hour of video; tell the user it is running and that they can step away. Whisper's small multilingual model is weak on Hindi/Hinglish (repeats and garbles); say so, and prefer YouTube captions or the medium model (`--download-model medium`, about 1.5 GB, slower).
 
 ## Step 4 - Pick the moments (this is the part only Claude does)
 
