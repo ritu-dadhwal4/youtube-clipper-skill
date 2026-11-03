@@ -145,4 +145,5 @@ function drawEditor(id){
 function route(){const id=cur();$("#zip").style.display="";id?drawEditor(id):drawList()}
 window.addEventListener("hashchange",route);
 fetch("/api/state").then(r=>r.json()).then(s=>{clips=s.clips;meta=s.meta;route()});
+setInterval(()=>fetch("/api/state",{cache:"no-store"}).then(()=>{const b=$("#gone");if(b)b.remove()}).catch(()=>{if($("#gone"))return;const d=document.createElement("div");d.id="gone";d.style.cssText="position:fixed;left:0;right:0;bottom:0;padding:14px 24px;background:rgb(10,10,10);color:#fff;font:600 14px Geist,sans-serif;text-align:center;z-index:9";d.textContent="The clip page stopped running on your computer, so videos cannot play. Ask Claude to open the clip page again, then refresh this tab.";document.body.appendChild(d)}),4000);
 </script></body></html>

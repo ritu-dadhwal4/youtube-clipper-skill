@@ -5,7 +5,7 @@ usage: picker.py DIR [--port 8765] [--no-open]
 Shows every finished clip as a card: preview, score, why it was picked, a trim nudge, a layout switch,
 caption text to copy, a Keep tick and a download button. 'Re-render' rebuilds one clip after you nudge it.
 """
-import argparse, io, json, threading, webbrowser, zipfile
+import argparse, io, json, re, threading, webbrowser, zipfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from common import load, save
@@ -34,10 +34,48 @@ def make_handler(d):
             self.end_headers()
             self.wfile.write(body)
 
+        def _video(self, f):
+            """Serve an mp4 with byte-range support: browsers need it to start playing and to seek."""
+            if not f.exists():
+                return self._send(b"", code=404)
+            size = f.stat().st_size
+            start, end, code = 0, size - 1, 200
+            m = re.match(r"bytes=(\d*)-(\d*)", self.headers.get("Range", ""))
+            if m and (m.group(1) or m.group(2)):
+                if m.group(1):
+                    start = int(m.group(1))
+                    end = int(m.group(2)) if m.group(2) else size - 1
+                else:
+                    start = max(0, size - int(m.group(2)))
+                end = min(end, size - 1)
+                code = 206
+            self.send_response(code)
+            self.send_header("Content-Type", "video/mp4")
+            self.send_header("Accept-Ranges", "bytes")
+            self.send_header("Content-Length", str(end - start + 1))
+            if code == 206:
+                self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            try:
+                with open(f, "rb") as fh:
+                    fh.seek(start)
+                    left = end - start + 1
+                    while left > 0:
+                        chunk = fh.read(min(1 << 20, left))
+                        if not chunk:
+                            break
+                        self.wfile.write(chunk)
+                        left -= len(chunk)
+            except (BrokenPipeError, ConnectionResetError):
+                pass  # the browser stopped reading (seeked or left): normal
+
         def do_GET(self):
             self.path = self.path.split("?")[0]   # ignore ?v=2 style cache-busters
             if self.path in ("/", "/index.html"):
                 return self._send(PAGE.read_bytes(), "text/html; charset=utf-8")
+            if self.path.startswith("/clips/") and self.path.endswith(".mp4"):
+                return self._video(d / "clips" / Path(self.path).name)
             if self.path.startswith("/assets/"):
                 f = Path(__file__).with_name("assets") / Path(self.path).name
                 return self._send(f.read_bytes(), "font/woff2") if f.exists() else self._send(b"", code=404)
