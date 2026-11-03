@@ -40,7 +40,7 @@ input[type=range]{accent-color:rgb(var(--ink));width:120px}input[type=checkbox]{
 input[type=color]{width:40px;height:40px;padding:3px;border:1px solid var(--hair-strong);border-radius:50%;background:#fff;cursor:pointer}
 .sw{min-height:28px;width:28px;padding:0;border-radius:50%;border:1px solid var(--hair-strong);box-shadow:none}.sw:hover{transform:scale(1.1);box-shadow:none}
 .hookrow{flex-direction:column;align-items:stretch;gap:8px}.hookrow input{border-radius:var(--r-inner);width:100%}
-.hlang{min-height:32px;padding:0 12px;font-size:13px;font-weight:500}.hlang.on{background:rgb(var(--ink));color:#fff;border-color:rgb(var(--ink))}.sug{gap:6px}.sug .pick{min-height:34px;padding:0 14px;font-size:13px;font-weight:500;text-align:left}
+.sug{gap:6px}.sug .pick{min-height:34px;padding:0 14px;font-size:13px;font-weight:500;text-align:left}
 small.req{color:rgb(var(--danger));font:600 12px Geist;letter-spacing:0;text-transform:none;margin-left:6px}
 label.keep{display:flex;gap:8px;align-items:center;font-weight:600;font-size:14px}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px}
 hr.sep{border:0;border-top:1px solid var(--hair-soft);margin:0}
@@ -112,9 +112,8 @@ function drawEditor(id){
       <div class="row bgr"><span class="eyebrow">Colour</span><input type="color" class="bgc" value="${c.bg||"#FED50C"}"><input type="text" class="bgh" size="8" value="${c.bg||"#FED50C"}" aria-label="Colour code">
         ${["#FED50C","#111111","#ffffff","#1b2a49","#c0392b"].map(x=>`<button type="button" class="sw" data-c="${x}" style="background:${x}" aria-label="${x}"></button>`).join("")}</div>
       <div class="row hookrow"><span class="eyebrow">Hook headline<small class="req"></small></span><input type="text" class="hook" value="${esc(c.hook)}" placeholder="Type a hook, or pick a suggestion">
-        <div class="row hl"><span class="eyebrow">Ideas in</span>${["Original","English","Hinglish","Hindi"].map(k=>`<button type="button" class="ghost hlang" data-l="${k}">${k==="Original"?"Spoken language":k}</button>`).join("")}<span class="why hmsg"></span></div>
         <div class="row sug"></div></div>
-      <div class="row"><span class="eyebrow">Captions</span><select class="cap"><option value="original">Spoken words (as said)</option>${["English","Hinglish","Hindi"].map(k=>`<option value="set:${k}">${k}${(c.caption_sets||{})[k]?"":" (translates when chosen)"}</option>`).join("")}<option value="none">No captions</option></select><span class="why capmsg"></span></div>
+      <div class="row"><span class="eyebrow">Captions</span><select class="cap"><option value="original">Spoken words (as said)</option>${Object.keys(c.caption_sets||{}).map(k=>`<option value="set:${esc(k)}">${esc(k)}</option>`).join("")}<option value="none">No captions</option></select></div>
       <div class="row"><button class="rr">Re-render this clip</button><span class="why rmsg"></span></div></div>
     <div class="sec"><h3>Post</h3><textarea class="post" aria-label="Post caption">${esc(c.post||c.first_line||"")}</textarea>
       <div class="actions"><label class="keep"><input type="checkbox" class="kp" ${c.keep===false?"":"checked"}> Keep</label><button class="ghost cp">Copy caption</button><a class="btn ghost dl" download="${c.id}.mp4" href="/clips/${c.id}.mp4?v=${c.v||0}">Download</a></div></div>
@@ -132,23 +131,9 @@ function drawEditor(id){
   q(".cp").onclick=e=>{navigator.clipboard.writeText(q(".post").value);e.target.textContent="Copied";setTimeout(()=>e.target.textContent="Copy caption",1200)};
   root.querySelectorAll(".nudge button").forEach(b=>b.onclick=()=>{c[b.dataset.k==="s"?"start":"end"]+=+b.dataset.d;q(".sv").textContent=t(c.start);q(".ev").textContent=t(c.end);q(".rmsg").textContent="Trim changed. Re-render to see it."});
 
-  const hookCache=l=>l==="Original"?(c.hook_options||[]):((c.hook_options_by_lang||{})[l]||[]);
-  const showHooks=l=>{root.querySelectorAll(".hlang").forEach(b=>b.classList.toggle("on",b.dataset.l===l));
-    q(".sug").innerHTML=hookCache(l).map(o=>`<button type="button" class="ghost pick">${esc(o)}</button>`).join("");
-    q(".sug").querySelectorAll(".pick").forEach(b=>b.onclick=()=>q(".hook").value=b.textContent)};
-  root.querySelectorAll(".hlang").forEach(b=>b.onclick=async()=>{const l=b.dataset.l;
-    if(!hookCache(l).length){q(".hmsg").textContent="Writing ideas…";root.querySelectorAll(".hlang").forEach(x=>x.disabled=true);
-      const r=await fetch("/api/hooks",{method:"POST",body:JSON.stringify({id:c.id,lang:l,start:c.start,end:c.end})});const j=await r.json();
-      root.querySelectorAll(".hlang").forEach(x=>x.disabled=false);
-      if(j.error){q(".hmsg").textContent=j.error;return}
-      if(l==="Original")c.hook_options=j;else(c.hook_options_by_lang=c.hook_options_by_lang||{})[l]=j;q(".hmsg").textContent=""}
-    showHooks(l)});
-  showHooks("Original");
-  q(".cap").onchange=async e=>{const v=e.target.value;if(!v.startsWith("set:")||(c.caption_sets||{})[v.slice(4)])return;
-    const l=v.slice(4);e.target.disabled=true;q(".capmsg").textContent="Translating "+l+"…";
-    const r=await fetch("/api/translate",{method:"POST",body:JSON.stringify({id:c.id,lang:l,start:c.start,end:c.end})});const j=await r.json();e.target.disabled=false;
-    if(j.error){q(".capmsg").textContent=j.error;e.target.value="original";return}
-    (c.caption_sets=c.caption_sets||{})[l]=j;q(".capmsg").textContent=l+" captions ready. Press Re-render."};
+  const ideas=[...new Set([...(c.hook_options||[]),...Object.values(c.hook_options_by_lang||{}).flat()])];
+  q(".sug").innerHTML=ideas.map(o=>`<button type="button" class="ghost pick">${esc(o)}</button>`).join("");
+  q(".sug").querySelectorAll(".pick").forEach(b=>b.onclick=()=>q(".hook").value=b.textContent);
   q(".prev").onclick=()=>location.hash="#/"+clips[i-1].id;q(".next").onclick=()=>location.hash="#/"+clips[i+1].id;
   q(".rr").onclick=async e=>{const b=e.target;
     if(lay.value==="card"&&!q(".hook").value.trim()){q(".hook").focus();q(".req").textContent="(required: write or pick a hook)";return}

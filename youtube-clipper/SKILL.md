@@ -31,8 +31,8 @@ Round 1, one AskUserQuestion call. Always ask the layout and the caption languag
    - **Card with hook on top**: a headline above, the video in a tall rounded card, on a colour background.
    - **Whole frame on a colour**: the full frame in the middle, on a colour background. Best when the video shows slides or graphics.
    - **Whole frame on blur**: the full frame over a blurred copy. Safest, but the most generic.
-3. **Captions**: Spoken words (word by word, the spoken word in yellow) / English translation / Hinglish (Roman letters) / No captions. Translations are written by you in Step 4 and shown a line at a time.
-4. **Hook headline on the clips?** Yes, suggest options (Recommended) / No. The card layout always has one, so skip this question for it.
+3. **Captions** (this is the only place the language is chosen, so ask it every time): Spoken words as said, word by word with the spoken word in yellow (Recommended) / English / Hinglish (Hindi in Roman letters) / No captions. You write the English or Hinglish lines yourself in Step 4; they show a line at a time. The clip page can switch between what exists but cannot make new languages.
+4. **Hook headline on the clips?** Yes, in English / Yes, in the spoken language / Yes, in Hinglish / No. The card layout always has one, so for it skip the "No" and still ask the language.
 
 Round 2, only what the answers need (one AskUserQuestion call):
 - **Background colour** for Card or Whole frame on a colour: Yellow #FED50C (Recommended) / Black / White / Navy / or the user types their own colour code under Other.
@@ -76,9 +76,9 @@ Write `<folder>/clips.json`, best first:
 
 `layout` is `fill`, `card`, `brand` or `blur` (the user's round-1 answer). `bg` only matters for `card` and `brand`. Leave `xpos`/`ypos` out: the render follows the speaker's face on its own.
 
-**Hook headline (when on, and always for `card`).** Write 3 options per clip in the clip's own spoken language, each at most 8 words: a claim, a question or a number that makes someone stop scrolling, true to what the clip says, no false promises. Show the user every clip with its options and ask which to use per clip (one AskUserQuestion call, up to 4 clips each; for more clips list them in text and let the user answer in one message). They may pick one, write their own, or pick none for a layout that does not need it. Put the approved text in `hook` and keep the options in `hook_options` (the clip page offers them as one-tap suggestions). Layouts other than `card` show the hook for the first 4.5 seconds; `card` shows it throughout.
+**Hook headline (when on, and always for `card`).** Write 3 options per clip in the language the user chose in round 1, each at most 8 words: a claim, a question or a number that makes someone stop scrolling, true to what the clip says, no false promises. Show the user every clip with its options and ask which to use per clip (one AskUserQuestion call, up to 4 clips each; for more clips list them in text and let the user answer in one message). They may pick one, write their own, or pick none for a layout that does not need it. Put the approved text in `hook` and keep the options in `hook_options` (the clip page offers them as one-tap suggestions). Layouts other than `card` show the hook for the first 4.5 seconds; `card` shows it throughout.
 
-**Captions.** The user can also switch caption language and ask for hook ideas in any language later, inside the clip page (English, Hinglish, Hindi; the page translates on demand through the user's own `claude -p`, so a little of their plan is used). So you only pre-write a language in Step 4 when it was their round-1 choice. `"captions": "original"` draws the spoken words. `"none"` draws nothing. For an English or Hinglish choice, translate or transliterate each clip into short lines (at most 5 words or 28 characters), with start and end in source seconds taken from `words.json`, and store them as `"caption_sets": {"English": [{"s": 754.2, "e": 757.0, "t": "..."}]}` with `"captions": "set:English"`. Keep the meaning exact; never invent or soften what was said.
+**Captions.** `"captions": "original"` draws the spoken words. `"none"` draws nothing. For the English or Hinglish choice, translate or transliterate each clip into short lines (at most 5 words or 28 characters), with start and end in source seconds taken from `words.json`, and store them as `"caption_sets": {"English": [{"s": 754.2, "e": 757.0, "t": "..."}]}` with `"captions": "set:English"`. Also keep the spoken words available (`captions` can be switched back to `original` on the clip page). Keep the meaning exact; never invent or soften what was said.
 
 ## Step 5 - Render
 
@@ -86,7 +86,7 @@ Write `<folder>/clips.json`, best first:
 
 ## Step 6 - Open the page
 
-`python3 scripts/picker.py <folder>` (runs in the background; opens http://127.0.0.1:8765). Tell the user: the page opens on a grid of all clips (tick Keep, hover to preview); **Edit** opens one clip with the video on the left and the options on the right: nudge start/end with +/-, press **Re-render**, switch layout, zoom, colour, hook headline (with ideas in the spoken language, English, Hinglish or Hindi) and caption language (spoken words, English, Hinglish, Hindi or none), untick **Keep** to drop one, download single clips or the zip. Stop the page with Ctrl+C when done.
+`python3 scripts/picker.py <folder>` (runs in the background; opens http://127.0.0.1:8765). Tell the user: the page opens on a grid of all clips (tick Keep, hover to preview); **Edit** opens one clip with the video on the left and the options on the right: nudge start/end with +/-, press **Re-render**, switch layout, zoom, colour, hook headline (tap one of the ideas you wrote, or type your own) and captions (the languages you prepared, spoken words or none). The language is chosen once, when the skill starts, and the page does not translate. Untick **Keep** to drop a clip; download single clips or the zip. Stop the page with Ctrl+C when done.
 
 ## Step 7 - Report
 
