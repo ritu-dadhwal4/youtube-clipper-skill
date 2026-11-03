@@ -37,6 +37,10 @@ In Claude Code, type:
 
 then paste the video link. Claude asks how many clips, which language and which layout, and does the rest.
 
+## Hindi and Hinglish
+
+For a YouTube link, the skill uses YouTube's own captions first (fast, and far better than a small speech model for Hindi). Hindi captions are drawn with Google Chrome, which must be installed, because Python's Pillow cannot shape Devanagari without extra libraries. YouTube's auto-captions sometimes drop or misspell numbers, so check any clip that quotes figures.
+
 ## Not on a Mac?
 
 Linux: install ffmpeg, yt-dlp and whisper.cpp with your package manager (the `whisper-cli` command must work). Windows: use WSL. The captions use Arial fonts from macOS; on Linux, edit the two font paths at the top of `scripts/captions.py`.
