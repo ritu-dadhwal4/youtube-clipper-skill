@@ -37,6 +37,9 @@ def make_handler(d):
         def do_GET(self):
             if self.path in ("/", "/index.html"):
                 return self._send(PAGE.read_bytes(), "text/html; charset=utf-8")
+            if self.path.startswith("/assets/"):
+                f = Path(__file__).with_name("assets") / Path(self.path).name
+                return self._send(f.read_bytes(), "font/woff2") if f.exists() else self._send(b"", code=404)
             if self.path == "/api/state":
                 return self._send(json.dumps({"meta": load(d / "meta.json", {}), "clips": load(d / "clips.json", [])}).encode())
             if self.path == "/api/zip":

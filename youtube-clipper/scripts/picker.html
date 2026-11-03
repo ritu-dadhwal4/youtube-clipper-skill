@@ -1,32 +1,53 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Your clips</title>
+<title>Your clips · Above Yellow</title>
 <style>
-:root{--bg:#faf8f3;--card:#fff;--ink:#17150f;--mute:#6f6a5c;--line:#e7e2d4;--y:#fed50c;--g:#1c8a4a}
-@media (prefers-color-scheme:dark){:root{--bg:#14130f;--card:#1e1c16;--ink:#f4f1e6;--mute:#a39e8d;--line:#322f25}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"Helvetica Neue",Arial,sans-serif}
-header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-header h1{font-size:18px;margin:0;flex:1;min-width:220px}header small{display:block;color:var(--mute);font-weight:400;font-size:13px}
-button,.btn{font:inherit;font-weight:600;border:1px solid var(--ink);background:var(--y);color:#17150f;padding:8px 14px;border-radius:999px;cursor:pointer;text-decoration:none;display:inline-block}
-button.ghost,.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}button:disabled{opacity:.5;cursor:wait}
-main{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;padding:24px;max-width:1500px;margin:auto}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+/* Above Yellow design tokens (app/globals.css): achromatic ink on white, hairlines, Geist, capsule controls. */
+@font-face{font-family:Geist;src:url(/assets/geist-subset.woff2) format("woff2");font-weight:100 900}
+@font-face{font-family:Wordmark;src:url(/assets/bricolage-wordmark.woff2) format("woff2");font-weight:700}
+:root{color-scheme:light;--ink:10 10 10;--ink-bright:23 23 23;--ink2:64 64 64;--ink3:115 115 115;--tint:245 245 245;--danger:192 57 43;--mark:#ff9900;
+--hair:rgba(10,10,10,.1);--hair-soft:rgba(10,10,10,.06);--hair-strong:rgba(10,10,10,.18);
+--r-inner:12px;--r-tile:16px;--r-card:20px;--lift:0 8px 28px -12px rgba(10,10,10,.28);
+--mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace}
+*{box-sizing:border-box;margin:0}
+body{background:#fff;color:rgb(var(--ink));font:15px/1.5 Geist,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+header{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--hair-soft);padding:0 24px;min-height:68px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.brand{display:inline-flex;align-items:center;gap:13px;font:700 22px/1.15 Wordmark,Geist,sans-serif;letter-spacing:-.038em;color:rgb(var(--ink))}
+.brand i{width:21px;height:21px;border-radius:50%;background:var(--mark);flex:none}
+.ttl{flex:1;min-width:220px;padding-left:16px;border-left:1px solid var(--hair);line-height:1.3}
+.ttl b{display:block;font:600 15px/1.3 Geist;letter-spacing:-.01em}.ttl span{font-size:13px;color:rgb(var(--ink3))}
+.eyebrow,label.f>span:first-child{font:400 12px/1 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:rgb(var(--ink3))}
+button,.btn{font:600 15px/1 Geist,sans-serif;min-height:44px;padding:0 20px;border-radius:9999px;border:1px solid transparent;background:rgb(var(--ink));color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .2s,background .2s,box-shadow .2s}
+button:hover,.btn:hover{background:rgb(var(--ink-bright));transform:translateY(-1px);box-shadow:var(--lift)}button:active,.btn:active{transform:scale(.98)}
+button.ghost,.btn.ghost{background:#fff;color:rgb(var(--ink));border-color:var(--hair-strong)}button.ghost:hover,.btn.ghost:hover{background:rgb(var(--tint));box-shadow:none;transform:none}
+button:disabled{opacity:.5;cursor:wait;transform:none;box-shadow:none}
+:is(button,.btn,select,input,textarea):focus-visible{outline:0;box-shadow:0 0 0 2px #fff,0 0 0 5px rgba(10,10,10,.55)}
+main{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;padding:32px 24px 64px;max-width:1480px;margin:auto}
+.card{background:#fff;border:1px solid var(--hair);border-radius:var(--r-card);padding:8px;display:flex;flex-direction:column;gap:4px}
 .card.off{opacity:.45}
-.vid{position:relative;background:#000;aspect-ratio:9/16;max-height:520px;margin:0 auto;width:100%}.vid video{width:100%;height:100%;object-fit:contain;display:block}
-.rank{position:absolute;top:10px;left:10px;background:var(--y);color:#17150f;font-weight:700;border-radius:999px;padding:2px 10px;font-size:13px}
-.score{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.7);color:#fff;border-radius:999px;padding:2px 10px;font-size:13px}
-.body{padding:14px;display:flex;flex-direction:column;gap:10px}
-.title{font:600 16px/1.3 inherit;width:100%;border:1px solid transparent;background:transparent;color:var(--ink);padding:4px;border-radius:8px}.title:focus{border-color:var(--line);outline:0;background:var(--bg)}
-.why{color:var(--mute);font-size:13px;margin:0}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
-.nudge{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:10px;padding:2px 6px}.nudge b{min-width:58px;text-align:center;font-variant-numeric:tabular-nums}
-.nudge button{padding:0 8px;border-radius:8px;border-color:var(--line);background:transparent;color:var(--ink);font-size:16px;line-height:24px}
-select{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:4px 6px}
-textarea{width:100%;font:inherit;font-size:13px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px;resize:vertical;min-height:64px}
-input[type=text],input[type=range]{font:inherit;font-size:13px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:5px 8px}input[type=range]{padding:0;width:90px}input[type=color]{width:34px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:none}.sw{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);cursor:pointer;padding:0}.hookrow{flex-direction:column;align-items:stretch}.hookrow .row{margin:0}small.req{color:#b3261e;font-weight:600}
-label.keep{display:flex;gap:6px;align-items:center;font-weight:600}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.msg{padding:60px 24px;text-align:center;color:var(--mute)}
+.vid{position:relative;background:rgb(var(--tint));border-radius:var(--r-tile);overflow:hidden;aspect-ratio:9/16;width:100%}.vid video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
+.rank,.score{position:absolute;top:12px;font:400 12px/1 var(--mono);letter-spacing:.06em;padding:7px 10px;border-radius:9999px}
+.rank{left:12px;background:rgb(var(--ink));color:#fff}.score{right:12px;background:rgba(255,255,255,.92);color:rgb(var(--ink));border:1px solid var(--hair)}
+.body{padding:12px 8px 8px;display:flex;flex-direction:column;gap:14px}
+.title{font:600 17px/1.3 Geist;letter-spacing:-.01em;width:100%;border:1px solid transparent;background:transparent;color:rgb(var(--ink));padding:6px 10px;margin:0 -10px;border-radius:var(--r-inner)}.title:hover{background:rgb(var(--tint))}.title:focus{outline:0;border-color:var(--hair-strong);background:#fff}
+.why{color:rgb(var(--ink2));font-size:13px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row>span:first-child{min-width:64px}
+.nudge{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--hair-strong);border-radius:9999px;padding:3px}.nudge b{min-width:60px;text-align:center;font:500 13px var(--mono);font-variant-numeric:tabular-nums}
+.nudge button{min-height:32px;width:32px;padding:0;font-size:16px;background:rgb(var(--tint));color:rgb(var(--ink));box-shadow:none}.nudge button:hover{background:#e5e5e5;transform:none;box-shadow:none}
+select,input[type=text],textarea{font:400 14px/1.3 Geist,sans-serif;color:rgb(var(--ink));background:#fff;border:1px solid var(--hair-strong);border-radius:9999px;padding:0 14px;min-height:40px}
+select{padding-right:8px}textarea{border-radius:var(--r-tile);padding:12px 14px;width:100%;resize:vertical;min-height:84px;font-size:13px;line-height:1.5}
+input[type=range]{accent-color:rgb(var(--ink));width:120px}input[type=checkbox]{accent-color:rgb(var(--ink));width:18px;height:18px}
+input[type=color]{width:40px;height:40px;padding:3px;border:1px solid var(--hair-strong);border-radius:50%;background:#fff;cursor:pointer}
+.sw{min-height:28px;width:28px;padding:0;border-radius:50%;border:1px solid var(--hair-strong);box-shadow:none}.sw:hover{transform:scale(1.1);box-shadow:none}
+.hookrow{flex-direction:column;align-items:stretch;gap:8px}.hookrow input{border-radius:var(--r-inner);width:100%}
+.sug{gap:6px}.sug .pick{min-height:34px;padding:0 14px;font-size:13px;font-weight:500;text-align:left}
+small.req{color:rgb(var(--danger));font:600 12px Geist;letter-spacing:0;text-transform:none;margin-left:6px}
+label.keep{display:flex;gap:8px;align-items:center;font-weight:600;font-size:14px}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px}
+hr.sep{border:0;border-top:1px solid var(--hair-soft);margin:0}
+.msg{padding:80px 24px;text-align:center;color:rgb(var(--ink3))}
+@media(max-width:560px){header{padding:8px 16px}main{padding:16px}.ttl{border:0;padding:0}}
 </style></head><body>
-<header><h1 id="h">Your clips<small id="sub"></small></h1><a class="btn" href="/api/zip" id="zip">Download kept clips (zip)</a></header>
+<header><span class="brand"><i></i>Above Yellow</span><div class="ttl"><b>Your clips</b><span id="sub"></span></div><a class="btn" href="/api/zip" id="zip">Download kept clips (zip)</a></header>
 <main id="grid"></main>
 <script>
 const $=s=>document.querySelector(s);let clips=[];
@@ -40,18 +61,18 @@ function draw(){
     el.innerHTML=`<div class="vid"><video controls muted playsinline preload="metadata" poster="/clips/${c.id}.jpg?v=${c.v||0}" src="/clips/${c.id}.mp4?v=${c.v||0}"></video><span class="rank">#${i+1}</span><span class="score">${c.score??""}/10</span></div>
     <div class="body"><input class="title" value="${(c.title||"").replace(/"/g,"&quot;")}" aria-label="Title">
     <p class="why">${c.reason||""}</p>
-    <div class="row"><span>Start</span><span class="nudge"><button data-k="s" data-d="-1">−</button><b>${t(c.start)}</b><button data-k="s" data-d="1">+</button></span>
-      <span>End</span><span class="nudge"><button data-k="e" data-d="-1">−</button><b>${t(c.end)}</b><button data-k="e" data-d="1">+</button></span></div>
-    <div class="row"><span>Layout</span><select class="lay"><option value="fill">Fill the screen (follows the face)</option><option value="card">Card with hook on top</option><option value="brand">Whole frame on a colour</option><option value="blur">Whole frame on blur</option></select></div>
-    <div class="row zm"><span>Zoom</span><input type="range" class="zoom" min="1" max="1.6" step="0.05" value="${c.zoom||1}"><b class="zv">${(c.zoom||1)}×</b></div>
-    <div class="row bgr"><span>Colour</span><input type="color" class="bgc" value="${c.bg||"#FED50C"}"><input type="text" class="bgh" size="8" value="${c.bg||"#FED50C"}" aria-label="Colour code">
+    <div class="row"><span class="eyebrow">Start</span><span class="nudge"><button data-k="s" data-d="-1">−</button><b>${t(c.start)}</b><button data-k="s" data-d="1">+</button></span>
+      <span class="eyebrow">End</span><span class="nudge"><button data-k="e" data-d="-1">−</button><b>${t(c.end)}</b><button data-k="e" data-d="1">+</button></span></div>
+    <div class="row"><span class="eyebrow">Layout</span><select class="lay"><option value="fill">Fill the screen (follows the face)</option><option value="card">Card with hook on top</option><option value="brand">Whole frame on a colour</option><option value="blur">Whole frame on blur</option></select></div>
+    <div class="row zm"><span class="eyebrow">Zoom</span><input type="range" class="zoom" min="1" max="1.6" step="0.05" value="${c.zoom||1}"><b class="zv">${(c.zoom||1)}×</b></div>
+    <div class="row bgr"><span class="eyebrow">Colour</span><input type="color" class="bgc" value="${c.bg||"#FED50C"}"><input type="text" class="bgh" size="8" value="${c.bg||"#FED50C"}" aria-label="Colour code">
       ${["#FED50C","#111111","#ffffff","#1b2a49","#c0392b"].map(x=>`<button type="button" class="sw" data-c="${x}" style="background:${x}" aria-label="${x}"></button>`).join("")}</div>
-    <div class="row hookrow"><span>Hook headline <small class="req"></small></span>
+    <div class="row hookrow"><span class="eyebrow">Hook headline<small class="req"></small></span>
       <input type="text" class="hook" value="${(c.hook||"").replace(/"/g,"&quot;")}" placeholder="Type a hook, or pick a suggestion">
       <div class="row sug">${(c.hook_options||[]).map(o=>`<button type="button" class="ghost pick">${o.replace(/</g,"&lt;")}</button>`).join("")}</div></div>
-    <div class="row"><span>Captions</span><select class="cap"><option value="original">Spoken words</option>${Object.keys(c.caption_sets||{}).map(k=>`<option value="set:${k}">${k}</option>`).join("")}<option value="none">No captions</option></select>
+    <div class="row"><span class="eyebrow">Captions</span><select class="cap"><option value="original">Spoken words</option>${Object.keys(c.caption_sets||{}).map(k=>`<option value="set:${k}">${k}</option>`).join("")}<option value="none">No captions</option></select>
       <button class="ghost rr">Re-render</button></div>
-    <textarea class="post" aria-label="Post caption">${c.post||c.hook||""}</textarea>
+    <hr class="sep"><textarea class="post" aria-label="Post caption">${c.post||c.hook||""}</textarea>
     <div class="actions"><label class="keep"><input type="checkbox" class="kp" ${c.keep===false?"":"checked"}> Keep</label>
       <button class="ghost cp">Copy caption</button><a class="btn ghost" download="${c.id}.mp4" href="/clips/${c.id}.mp4?v=${c.v||0}">Download</a></div></div>`;
     const q=s=>el.querySelector(s),lay=q(".lay");
