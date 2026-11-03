@@ -138,3 +138,77 @@ def build_track(words, clip_start, clip_end, folder):
     track = folder / "captions.ffconcat"
     track.write_text("\n".join(lines))
     return track
+
+
+def _screenshot(page, w, h):
+    chrome = _chrome()
+    if not chrome:
+        return None
+    with tempfile.TemporaryDirectory() as t:
+        (Path(t) / "p.html").write_text(page, encoding="utf-8")
+        shot = Path(t) / "shot.png"
+        subprocess.run([chrome, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--default-background-color=00000000",
+                        f"--user-data-dir={t}/profile", f"--window-size={w},{h}", "--virtual-time-budget=4000",
+                        f"--screenshot={shot}", f"file://{t}/p.html"], capture_output=True, timeout=120)
+        return Image.open(shot).convert("RGBA") if shot.exists() else None
+
+
+def hook_png(text, path, fg="#ffffff", outline=True, w=1080, h=330):
+    """The hook headline: big, bold, centred, wrapped over as many lines as fit. Chrome draws it (Hindi-safe);
+    without Chrome, Pillow draws it (Latin text only)."""
+    page = f"""<!doctype html><meta charset="utf-8"><style>
+html,body{{margin:0;background:transparent}}
+.h{{width:{w}px;height:{h}px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}}
+.t{{max-width:{w - 120}px;font-family:"Arial Black","Kohinoor Devanagari","Devanagari Sangam MN",sans-serif;font-weight:900;font-size:84px;line-height:1.18;color:{fg};
+{"-webkit-text-stroke:16px #000;paint-order:stroke fill;" if outline else ""}}}
+</style><div class="h"><div class="t">{html.escape(text)}</div></div>
+<script>const t=document.querySelector('.t');let s=84;while(t.getBoundingClientRect().height>{h - 30}&&s>40){{s-=4;t.style.fontSize=s+'px'}}</script>"""
+    img = _screenshot(page, w, h)
+    if img is None:  # no Chrome: Pillow, Latin only
+        import textwrap
+        img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        d = ImageDraw.Draw(img)
+        size = 84
+        while True:
+            font = _font(text, size)
+            lines = textwrap.wrap(text, width=max(8, int((w - 120) / (size * 0.62))))
+            if len(lines) * size * 1.18 <= h - 30 or size <= 40:
+                break
+            size -= 4
+        y = (h - len(lines) * size * 1.18) / 2
+        for ln in lines:
+            d.text((w / 2, y), ln, font=font, anchor="mt", fill=fg, stroke_width=8 if outline else 0, stroke_fill=(0, 0, 0, 255))
+            y += size * 1.18
+    img.save(path)
+    return path
+
+
+def build_line_track(lines, clip_start, clip_end, folder):
+    """Captions from whole lines (a translation, say) instead of the spoken words: [{"s","e","t"}], times in
+    source seconds. Same look as the word captions, with no highlighted word."""
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    dur = clip_end - clip_start
+    blank = folder / "blank.png"
+    Image.new("RGBA", (W, H), (0, 0, 0, 0)).save(blank)
+    segs, t, to_draw = [], 0.0, []
+    for ln in sorted(lines, key=lambda x: x["s"]):
+        s, e = max(ln["s"] - clip_start, t), min(ln["e"] - clip_start, dur)
+        if e <= s or not ln["t"].strip():
+            continue
+        if s > t + 0.01:
+            segs.append((blank, s - t))
+        png = folder / ("l" + hashlib.md5(ln["t"].encode()).hexdigest()[:12] + ".png")
+        to_draw.append((png, ln["t"].split(), -1))
+        segs.append((png, e - s))
+        t = e
+    if dur > t:
+        segs.append((blank, dur - t))
+    draw_all(to_draw)
+    out = ["ffconcat version 1.0"]
+    for p, d in segs:
+        out += [f"file '{p}'", f"duration {d:.3f}"]
+    out.append(f"file '{segs[-1][0]}'")
+    track = folder / "captions-lines.ffconcat"
+    track.write_text("\n".join(out))
+    return track

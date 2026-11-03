@@ -5,6 +5,9 @@ Give Claude one long video (a YouTube link or a file). It reads what was said, p
 - Works on podcasts and interviews up to about 3 hours.
 - A 1-hour video usually gives **8–15 good clips** (default: 10). Quality drops after that.
 - Clips are 30–60 seconds, start on a hook and end on a finished thought.
+- **Four layouts:** fill the screen (follows the speaker's face, optional zoom), a card with a hook headline on top, the whole frame on a colour you choose (any colour code), or the whole frame on blur.
+- **Captions your way:** spoken words with the word highlighted, an English or Hinglish translation, or none.
+- **Hook headlines:** Claude suggests options for every clip; you pick or write your own.
 - Everything runs on your own computer. Nothing is uploaded anywhere.
 
 > Claude cannot watch video. It chooses moments by reading the transcript, so watch each clip before you post it.
@@ -22,7 +25,7 @@ mkdir -p ~/.claude/skills && cp -r youtube-clipper-skill/youtube-clipper ~/.clau
 ```
 
 ```bash
-brew install ffmpeg yt-dlp whisper-cpp && python3 -m pip install --user pillow
+brew install ffmpeg yt-dlp whisper-cpp && python3 -m pip install --user pillow "opencv-python-headless<5"
 ```
 
 The first run also downloads a speech model (about 470 MB). Claude asks before it does.
@@ -57,7 +60,9 @@ Clip videos you own, have permission to use, or that are part of a paid clipping
 | `scripts/setup_check.py` | Checks what is installed |
 | `scripts/fetch.py` | Downloads the video (yt-dlp) |
 | `scripts/transcribe.py` | Word-by-word transcript (whisper.cpp) |
-| `scripts/render.py` | Cuts, crops to 9:16, adds captions (ffmpeg + Pillow) |
+| `scripts/render.py` | Cuts, lays out in 9:16, adds hook and captions (ffmpeg) |
+| `scripts/face.py` | Follows the speaker's face for the fill layout (OpenCV) |
+| `scripts/captions.py` | Draws captions and hook headlines (Pillow, or Chrome for Hindi) |
 | `scripts/picker.py` | The preview page on your computer |
 
 ## License

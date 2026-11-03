@@ -56,11 +56,13 @@ def make_handler(d):
                 c = next((x for x in clips if x["id"] == body.get("id")), None)
                 if not c:
                     return self._send(b'{"error":"unknown clip"}', code=404)
-                for k in ("title", "post", "keep", "layout", "xpos"):
+                for k in ("title", "post", "keep", "layout", "zoom", "bg", "hook", "captions"):
                     if k in body:
                         c[k] = body[k]
                 if self.path == "/api/rerender":
                     c["start"], c["end"] = float(body["start"]), float(body["end"])
+                    c.pop("xpos", None)
+                    c.pop("ypos", None)  # follow the face again
                     render(d, c, load(d / "words.json", []), load(d / "meta.json", {}))
                     c["v"] = c.get("v", 0) + 1
                 save(d / "clips.json", clips)
