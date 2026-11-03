@@ -11,11 +11,11 @@ Everything runs on the user's own computer. Claude cannot watch video, so it pic
 
 Scripts live in `<skill>/scripts/` (run with `python3`). Working folder per video: `~/Documents/YouTube Clips/<video-name>/`.
 
-## Before you start (say this once, in one line)
+## Before you start (say this once, and do not soften it)
 
-"Clip only videos you own, have permission to use, or that sit inside a paid clipping programme where the creator invites clippers. Re-uploading someone's video without that can get your channel demonetised or struck."
+"Never post a clip of someone else's video without the creator's clear consent, and always tag and credit them. Clip only videos you own, videos whose creator has said yes in writing, or videos inside a paid clipping programme where the creator invites clippers. Do not use anyone's work without their agreement."
 
-Do not lecture beyond that.
+If the user says they do not have consent, do not continue with that video; offer to clip a video they own instead. Do not lecture beyond this.
 
 ## Step 0 - Check the setup (first run only)
 
@@ -68,7 +68,7 @@ Write `<folder>/clips.json`, best first:
 ```json
 [{"id": "c1", "title": "≤60 chars, curiosity not clickbait", "first_line": "the first spoken line (a note for you, never shown on the clip)",
   "start": 754.2, "end": 801.0, "score": 9, "reason": "one sentence: why this works",
-  "post": "Caption to post, 1-2 lines + 3-5 hashtags",
+  "post": "Caption to post, 1-2 lines + 3-5 hashtags, ending with a credit line: Source: <channel name> (read it from meta.json)",
   "layout": "fill", "zoom": 1.0, "bg": "#FED50C", "captions": "original",
   "hook": "", "hook_options": [], "caption_sets": {}}]
 ```
@@ -94,6 +94,7 @@ Say how many clips, the best three with their titles and scores, anything droppe
 
 ## Rules
 
+- Every post caption you write ends with `Source: <creator or channel name>`, and you remind the user to tag the creator when they post. Never write a caption that suggests the clip is the user's own work.
 - Never promise views or income. Clips are a starting point; results depend on the account, the topic and consistency.
 - Do not add music, logos or faces from other sources. Do not edit what a person says (no cutting words out to change the meaning).
 - Keep each video's files inside its own working folder. Never delete the source video unless asked.

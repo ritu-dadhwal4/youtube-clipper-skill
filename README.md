@@ -48,9 +48,9 @@ For a YouTube link, the skill uses YouTube's own captions first (fast, and far b
 
 Linux: install ffmpeg, yt-dlp and whisper.cpp with your package manager (the `whisper-cli` command must work). Windows: use WSL. The captions use Arial fonts from macOS; on Linux, edit the two font paths at the top of `scripts/captions.py`.
 
-## Use it responsibly
+## Consent first, credit always
 
-Clip videos you own, have permission to use, or that are part of a paid clipping programme where the creator invites clippers. Re-uploading someone else's video without that can get your channel demonetised or struck. No tool can promise views or income.
+Never post a clip of someone else's video without the creator's clear consent. Ask first, keep their yes in writing, and tag and credit them in every post. Clip videos you own, videos whose creator has said yes, or videos inside a paid clipping programme where the creator invites clippers. Never take, pass off or earn from someone's work without their agreement. Re-uploading without it can also get your channel demonetised or struck. No tool can promise views or income.
 
 ## What is inside
 
