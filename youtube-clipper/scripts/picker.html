@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your clips</title>
+<style>
+:root{--bg:#faf8f3;--card:#fff;--ink:#17150f;--mute:#6f6a5c;--line:#e7e2d4;--y:#fed50c;--g:#1c8a4a}
+@media (prefers-color-scheme:dark){:root{--bg:#14130f;--card:#1e1c16;--ink:#f4f1e6;--mute:#a39e8d;--line:#322f25}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"Helvetica Neue",Arial,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;flex:1;min-width:220px}header small{display:block;color:var(--mute);font-weight:400;font-size:13px}
+button,.btn{font:inherit;font-weight:600;border:1px solid var(--ink);background:var(--y);color:#17150f;padding:8px 14px;border-radius:999px;cursor:pointer;text-decoration:none;display:inline-block}
+button.ghost,.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}button:disabled{opacity:.5;cursor:wait}
+main{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;padding:24px;max-width:1500px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.card.off{opacity:.45}
+.vid{position:relative;background:#000;aspect-ratio:9/16;max-height:520px;margin:0 auto;width:100%}.vid video{width:100%;height:100%;object-fit:contain;display:block}
+.rank{position:absolute;top:10px;left:10px;background:var(--y);color:#17150f;font-weight:700;border-radius:999px;padding:2px 10px;font-size:13px}
+.score{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.7);color:#fff;border-radius:999px;padding:2px 10px;font-size:13px}
+.body{padding:14px;display:flex;flex-direction:column;gap:10px}
+.title{font:600 16px/1.3 inherit;width:100%;border:1px solid transparent;background:transparent;color:var(--ink);padding:4px;border-radius:8px}.title:focus{border-color:var(--line);outline:0;background:var(--bg)}
+.why{color:var(--mute);font-size:13px;margin:0}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.nudge{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:10px;padding:2px 6px}.nudge b{min-width:58px;text-align:center;font-variant-numeric:tabular-nums}
+.nudge button{padding:0 8px;border-radius:8px;border-color:var(--line);background:transparent;color:var(--ink);font-size:16px;line-height:24px}
+select{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:4px 6px}
+textarea{width:100%;font:inherit;font-size:13px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px;resize:vertical;min-height:64px}
+label.keep{display:flex;gap:6px;align-items:center;font-weight:600}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.msg{padding:60px 24px;text-align:center;color:var(--mute)}
+</style></head><body>
+<header><h1 id="h">Your clips<small id="sub"></small></h1><a class="btn" href="/api/zip" id="zip">Download kept clips (zip)</a></header>
+<main id="grid"></main>
+<script>
+const $=s=>document.querySelector(s);let clips=[];
+const t=s=>{s=Math.max(0,s);const m=Math.floor(s/60),r=s-m*60;return m+":"+r.toFixed(1).padStart(4,"0")};
+async function post(url,body){const r=await fetch(url,{method:"POST",body:JSON.stringify(body)});return r.json()}
+function draw(){
+  const keep=clips.filter(c=>c.keep!==false).length;$("#zip").textContent=`Download ${keep} kept clip${keep==1?"":"s"} (zip)`;
+  $("#grid").innerHTML=clips.length?"":'<div class="msg">No clips yet. Ask Claude to find the moments first.</div>';
+  clips.forEach((c,i)=>{
+    const el=document.createElement("div");el.className="card"+(c.keep===false?" off":"");
+    el.innerHTML=`<div class="vid"><video controls muted playsinline preload="metadata" poster="/clips/${c.id}.jpg?v=${c.v||0}" src="/clips/${c.id}.mp4?v=${c.v||0}"></video><span class="rank">#${i+1}</span><span class="score">${c.score??""}/10</span></div>
+    <div class="body"><input class="title" value="${(c.title||"").replace(/"/g,"&quot;")}" aria-label="Title">
+    <p class="why">${c.reason||""}</p>
+    <div class="row"><span>Start</span><span class="nudge"><button data-k="s" data-d="-1">−</button><b>${t(c.start)}</b><button data-k="s" data-d="1">+</button></span>
+      <span>End</span><span class="nudge"><button data-k="e" data-d="-1">−</button><b>${t(c.end)}</b><button data-k="e" data-d="1">+</button></span></div>
+    <div class="row"><span>Layout</span><select class="lay"><option value="blur">Whole frame</option><option value="crop:0.5">Fill, centre</option><option value="crop:0.2">Fill, left</option><option value="crop:0.8">Fill, right</option></select>
+      <button class="ghost rr">Re-render</button></div>
+    <textarea class="post" aria-label="Post caption">${c.post||c.hook||""}</textarea>
+    <div class="actions"><label class="keep"><input type="checkbox" class="kp" ${c.keep===false?"":"checked"}> Keep</label>
+      <button class="ghost cp">Copy caption</button><a class="btn ghost" download="${c.id}.mp4" href="/clips/${c.id}.mp4?v=${c.v||0}">Download</a></div></div>`;
+    el.querySelector(".lay").value=(c.layout==="crop"?"crop:"+(c.xpos??0.5):"blur");
+    el.querySelector(".title").onchange=e=>post("/api/save",{id:c.id,title:e.target.value});
+    el.querySelector(".post").onchange=e=>post("/api/save",{id:c.id,post:e.target.value});
+    el.querySelector(".kp").onchange=e=>{c.keep=e.target.checked;post("/api/save",{id:c.id,keep:c.keep});draw()};
+    el.querySelector(".cp").onclick=e=>{navigator.clipboard.writeText(el.querySelector(".post").value);e.target.textContent="Copied";setTimeout(()=>e.target.textContent="Copy caption",1200)};
+    el.querySelectorAll(".nudge button").forEach(b=>b.onclick=()=>{c[b.dataset.k==="s"?"start":"end"]+=+b.dataset.d;draw()});
+    el.querySelector(".rr").onclick=async e=>{const b=e.target;b.disabled=true;b.textContent="Rendering…";
+      const [l,x]=el.querySelector(".lay").value.split(":");
+      const n=await post("/api/rerender",{id:c.id,start:c.start,end:c.end,layout:l,xpos:x?+x:0.5});Object.assign(c,n);draw()};
+    $("#grid").appendChild(el)});
+}
+fetch("/api/state").then(r=>r.json()).then(s=>{clips=s.clips;$("#sub").textContent=(s.meta.title||"")+(s.meta.channel?" · "+s.meta.channel:"")+" · "+clips.length+" clips";draw()});
+</script></body></html>
