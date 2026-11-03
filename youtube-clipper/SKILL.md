@@ -78,7 +78,7 @@ Write `<folder>/clips.json`, best first:
 
 **Hook headline (when on, and always for `card`).** Write 3 options per clip in the clip's own spoken language, each at most 8 words: a claim, a question or a number that makes someone stop scrolling, true to what the clip says, no false promises. Show the user every clip with its options and ask which to use per clip (one AskUserQuestion call, up to 4 clips each; for more clips list them in text and let the user answer in one message). They may pick one, write their own, or pick none for a layout that does not need it. Put the approved text in `hook` and keep the options in `hook_options` (the clip page offers them as one-tap suggestions). Layouts other than `card` show the hook for the first 4.5 seconds; `card` shows it throughout.
 
-**Captions.** `"captions": "original"` draws the spoken words. `"none"` draws nothing. For an English or Hinglish choice, translate or transliterate each clip into short lines (at most 5 words or 28 characters), with start and end in source seconds taken from `words.json`, and store them as `"caption_sets": {"English": [{"s": 754.2, "e": 757.0, "t": "..."}]}` with `"captions": "set:English"`. Keep the meaning exact; never invent or soften what was said.
+**Captions.** The user can also switch caption language and ask for hook ideas in any language later, inside the clip page (English, Hinglish, Hindi; the page translates on demand through the user's own `claude -p`, so a little of their plan is used). So you only pre-write a language in Step 4 when it was their round-1 choice. `"captions": "original"` draws the spoken words. `"none"` draws nothing. For an English or Hinglish choice, translate or transliterate each clip into short lines (at most 5 words or 28 characters), with start and end in source seconds taken from `words.json`, and store them as `"caption_sets": {"English": [{"s": 754.2, "e": 757.0, "t": "..."}]}` with `"captions": "set:English"`. Keep the meaning exact; never invent or soften what was said.
 
 ## Step 5 - Render
 
@@ -86,7 +86,7 @@ Write `<folder>/clips.json`, best first:
 
 ## Step 6 - Open the page
 
-`python3 scripts/picker.py <folder>` (runs in the background; opens http://127.0.0.1:8765). Tell the user: the page opens on a grid of all clips (tick Keep, hover to preview); **Edit** opens one clip with the video on the left and the options on the right: nudge start/end with +/-, press **Re-render**, switch layout, zoom, colour, hook headline and caption language, untick **Keep** to drop one, download single clips or the zip. Stop the page with Ctrl+C when done.
+`python3 scripts/picker.py <folder>` (runs in the background; opens http://127.0.0.1:8765). Tell the user: the page opens on a grid of all clips (tick Keep, hover to preview); **Edit** opens one clip with the video on the left and the options on the right: nudge start/end with +/-, press **Re-render**, switch layout, zoom, colour, hook headline (with ideas in the spoken language, English, Hinglish or Hindi) and caption language (spoken words, English, Hinglish, Hindi or none), untick **Keep** to drop one, download single clips or the zip. Stop the page with Ctrl+C when done.
 
 ## Step 7 - Report
 
