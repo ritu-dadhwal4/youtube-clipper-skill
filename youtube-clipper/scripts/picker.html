@@ -46,53 +46,99 @@ label.keep{display:flex;gap:8px;align-items:center;font-weight:600;font-size:14p
 hr.sep{border:0;border-top:1px solid var(--hair-soft);margin:0}
 .msg{padding:80px 24px;text-align:center;color:rgb(var(--ink3))}
 @media(max-width:560px){header{padding:8px 16px}main{padding:16px}.ttl{border:0;padding:0}}
+
+/* list view */
+.card .go{display:block;text-decoration:none;color:inherit;cursor:pointer}
+.card .body{gap:10px}.card .meta{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card .meta .lay{font:400 12px var(--mono);letter-spacing:.06em;color:rgb(var(--ink3));text-transform:uppercase}
+.card .title{pointer-events:none}
+/* editor view */
+.ed{display:grid;grid-template-columns:minmax(300px,420px) minmax(0,1fr);gap:32px;max-width:1180px;margin:0 auto;padding:24px 24px 64px;align-items:start}
+.ed .left{position:sticky;top:92px}
+.ed .vid{max-height:calc(100vh - 150px);width:auto;margin:0 auto;aspect-ratio:9/16;height:calc(100vh - 150px)}
+.ed .vid.busy::after{content:"Rendering…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.8);font:600 15px Geist}
+.ed .right{display:flex;flex-direction:column;gap:18px;min-width:0}
+.crumb{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.nav{margin-left:auto;display:flex;gap:8px;align-items:center}.nav span{font:400 12px var(--mono);color:rgb(var(--ink3))}
+.sec{border:1px solid var(--hair);border-radius:var(--r-card);padding:18px;display:flex;flex-direction:column;gap:14px}
+.sec h3{font:400 12px var(--mono);letter-spacing:.13em;text-transform:uppercase;color:rgb(var(--ink3))}
+.ed .title{font-size:24px;letter-spacing:-.02em;padding:6px 10px;margin:0 -10px}
+.ed .row>span:first-child{min-width:78px}
+@media(max-width:860px){.ed{grid-template-columns:1fr;gap:16px;padding:16px}.ed .left{position:static}.ed .vid{height:auto;max-height:70vh}}
 </style></head><body>
-<header><span class="brand"><i></i>Above Yellow</span><div class="ttl"><b>Your clips</b><span id="sub"></span></div><a class="btn" href="/api/zip" id="zip">Download kept clips (zip)</a></header>
-<main id="grid"></main>
+<header><a class="brand" href="#" style="text-decoration:none"><i></i>Above Yellow</a><div class="ttl"><b>Your clips</b><span id="sub"></span></div><a class="btn" href="/api/zip" id="zip">Download kept clips (zip)</a></header>
+<div id="view"></div>
 <script>
-const $=s=>document.querySelector(s);let clips=[];
+const $=s=>document.querySelector(s);let clips=[],meta={};
 const t=s=>{s=Math.max(0,s);const m=Math.floor(s/60),r=s-m*60;return m+":"+r.toFixed(1).padStart(4,"0")};
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+const LAY={fill:"Fill the screen",card:"Card + hook",brand:"On a colour",blur:"On blur",crop:"Fill the screen"};
 async function post(url,body){const r=await fetch(url,{method:"POST",body:JSON.stringify(body)});return r.json()}
-function draw(){
-  const keep=clips.filter(c=>c.keep!==false).length;$("#zip").textContent=`Download ${keep} kept clip${keep==1?"":"s"} (zip)`;
-  $("#grid").innerHTML=clips.length?"":'<div class="msg">No clips yet. Ask Claude to find the moments first.</div>';
+const cur=()=>{const m=location.hash.match(/^#\/(c\d+)/);return m?m[1]:null};
+
+function zipLabel(){const k=clips.filter(c=>c.keep!==false).length;$("#zip").textContent=`Download ${k} kept clip${k==1?"":"s"} (zip)`}
+
+/* ---------- list ---------- */
+function drawList(){
+  $("#sub").textContent=(meta.title||"")+(meta.channel?" · "+meta.channel:"")+" · "+clips.length+" clips";
+  const g=$("#view");g.className="";g.id="view";g.innerHTML='<main id="grid"></main>';
+  const grid=$("#grid");if(!clips.length)grid.innerHTML='<div class="msg">No clips yet. Ask Claude to find the moments first.</div>';
   clips.forEach((c,i)=>{
     const el=document.createElement("div");el.className="card"+(c.keep===false?" off":"");
-    el.innerHTML=`<div class="vid"><video controls muted playsinline preload="metadata" poster="/clips/${c.id}.jpg?v=${c.v||0}" src="/clips/${c.id}.mp4?v=${c.v||0}"></video><span class="rank">#${i+1}</span><span class="score">${c.score??""}/10</span></div>
-    <div class="body"><input class="title" value="${(c.title||"").replace(/"/g,"&quot;")}" aria-label="Title">
-    <p class="why">${c.reason||""}</p>
-    <div class="row"><span class="eyebrow">Start</span><span class="nudge"><button data-k="s" data-d="-1">−</button><b>${t(c.start)}</b><button data-k="s" data-d="1">+</button></span>
-      <span class="eyebrow">End</span><span class="nudge"><button data-k="e" data-d="-1">−</button><b>${t(c.end)}</b><button data-k="e" data-d="1">+</button></span></div>
-    <div class="row"><span class="eyebrow">Layout</span><select class="lay"><option value="fill">Fill the screen (follows the face)</option><option value="card">Card with hook on top</option><option value="brand">Whole frame on a colour</option><option value="blur">Whole frame on blur</option></select></div>
-    <div class="row zm"><span class="eyebrow">Zoom</span><input type="range" class="zoom" min="1" max="1.6" step="0.05" value="${c.zoom||1}"><b class="zv">${(c.zoom||1)}×</b></div>
-    <div class="row bgr"><span class="eyebrow">Colour</span><input type="color" class="bgc" value="${c.bg||"#FED50C"}"><input type="text" class="bgh" size="8" value="${c.bg||"#FED50C"}" aria-label="Colour code">
-      ${["#FED50C","#111111","#ffffff","#1b2a49","#c0392b"].map(x=>`<button type="button" class="sw" data-c="${x}" style="background:${x}" aria-label="${x}"></button>`).join("")}</div>
-    <div class="row hookrow"><span class="eyebrow">Hook headline<small class="req"></small></span>
-      <input type="text" class="hook" value="${(c.hook||"").replace(/"/g,"&quot;")}" placeholder="Type a hook, or pick a suggestion">
-      <div class="row sug">${(c.hook_options||[]).map(o=>`<button type="button" class="ghost pick">${o.replace(/</g,"&lt;")}</button>`).join("")}</div></div>
-    <div class="row"><span class="eyebrow">Captions</span><select class="cap"><option value="original">Spoken words</option>${Object.keys(c.caption_sets||{}).map(k=>`<option value="set:${k}">${k}</option>`).join("")}<option value="none">No captions</option></select>
-      <button class="ghost rr">Re-render</button></div>
-    <hr class="sep"><textarea class="post" aria-label="Post caption">${c.post||c.hook||""}</textarea>
-    <div class="actions"><label class="keep"><input type="checkbox" class="kp" ${c.keep===false?"":"checked"}> Keep</label>
-      <button class="ghost cp">Copy caption</button><a class="btn ghost" download="${c.id}.mp4" href="/clips/${c.id}.mp4?v=${c.v||0}">Download</a></div></div>`;
-    const q=s=>el.querySelector(s),lay=q(".lay");
-    lay.value=c.layout==="crop"?"fill":(c.layout||"fill");q(".cap").value=c.captions||"original";
-    const sync=()=>{const L=lay.value;q(".zm").style.display=(L==="fill"||L==="card")?"":"none";q(".bgr").style.display=(L==="brand"||L==="card")?"":"none";
-      q(".req").textContent=L==="card"?"(required for this layout)":"(optional)"};sync();lay.onchange=sync;
-    q(".zoom").oninput=e=>q(".zv").textContent=e.target.value+"×";
-    const setc=v=>{q(".bgh").value=v;if(/^#[0-9a-f]{6}$/i.test(v))q(".bgc").value=v};
-    q(".bgc").oninput=e=>setc(e.target.value);q(".bgh").oninput=e=>setc(e.target.value);el.querySelectorAll(".sw").forEach(b=>b.onclick=()=>setc(b.dataset.c));
-    el.querySelectorAll(".pick").forEach(b=>b.onclick=()=>q(".hook").value=b.textContent);
-    el.querySelector(".title").onchange=e=>post("/api/save",{id:c.id,title:e.target.value});
-    el.querySelector(".post").onchange=e=>post("/api/save",{id:c.id,post:e.target.value});
-    el.querySelector(".kp").onchange=e=>{c.keep=e.target.checked;post("/api/save",{id:c.id,keep:c.keep});draw()};
-    el.querySelector(".cp").onclick=e=>{navigator.clipboard.writeText(el.querySelector(".post").value);e.target.textContent="Copied";setTimeout(()=>e.target.textContent="Copy caption",1200)};
-    el.querySelectorAll(".nudge button").forEach(b=>b.onclick=()=>{c[b.dataset.k==="s"?"start":"end"]+=+b.dataset.d;draw()});
-    q(".rr").onclick=async e=>{const b=e.target;
-      if(lay.value==="card"&&!q(".hook").value.trim()){q(".hook").focus();q(".req").textContent="(required: write or pick a hook)";return}
-      b.disabled=true;b.textContent="Rendering…";
-      const n=await post("/api/rerender",{id:c.id,start:c.start,end:c.end,layout:lay.value,zoom:+q(".zoom").value,bg:q(".bgh").value,hook:q(".hook").value.trim(),captions:q(".cap").value});Object.assign(c,n);draw()};
-    $("#grid").appendChild(el)});
+    el.innerHTML=`<a class="go" href="#/${c.id}"><div class="vid"><video muted playsinline preload="metadata" poster="/clips/${c.id}.jpg?v=${c.v||0}" src="/clips/${c.id}.mp4?v=${c.v||0}"></video><span class="rank">#${i+1}</span><span class="score">${c.score??""}/10</span></div></a>
+    <div class="body"><input class="title" value="${esc(c.title)}" readonly tabindex="-1">
+    <div class="meta"><span class="lay">${LAY[c.layout]||"Fill the screen"} · ${Math.round(c.end-c.start)}s</span><label class="keep"><input type="checkbox" ${c.keep===false?"":"checked"}> Keep</label></div>
+    <p class="why">${esc(c.reason)}</p>
+    <div class="actions"><a class="btn" href="#/${c.id}">Edit</a><a class="btn ghost" download="${c.id}.mp4" href="/clips/${c.id}.mp4?v=${c.v||0}">Download</a></div></div>`;
+    el.querySelector(".keep input").onchange=e=>{c.keep=e.target.checked;post("/api/save",{id:c.id,keep:c.keep});el.classList.toggle("off",!c.keep);zipLabel()};
+    const v=el.querySelector("video");el.querySelector(".go").onmouseenter=()=>{v.currentTime=0;v.muted=true;v.play().catch(()=>{})};el.querySelector(".go").onmouseleave=()=>{v.pause()};
+    grid.appendChild(el)});
+  zipLabel();window.scrollTo(0,0);
 }
-fetch("/api/state").then(r=>r.json()).then(s=>{clips=s.clips;$("#sub").textContent=(s.meta.title||"")+(s.meta.channel?" · "+s.meta.channel:"")+" · "+clips.length+" clips";draw()});
+
+/* ---------- editor ---------- */
+function drawEditor(id){
+  const i=clips.findIndex(c=>c.id===id);if(i<0){location.hash="";return}
+  const c=clips[i];
+  const root=$("#view");root.innerHTML=`<div class="ed"><div class="left"><div class="vid"><video controls muted playsinline poster="/clips/${c.id}.jpg?v=${c.v||0}" src="/clips/${c.id}.mp4?v=${c.v||0}"></video></div></div>
+  <div class="right">
+    <div class="crumb"><a class="btn ghost" href="#">← All clips</a><div class="nav"><button class="ghost prev" ${i?"":"disabled"} aria-label="Previous clip">←</button><span>${i+1} / ${clips.length}</span><button class="ghost next" ${i<clips.length-1?"":"disabled"} aria-label="Next clip">→</button></div></div>
+    <div><input class="title" value="${esc(c.title)}" aria-label="Title"><p class="why">${esc(c.reason)} <b>${c.score??""}/10</b></p></div>
+    <div class="sec"><h3>Trim</h3><div class="row"><span class="eyebrow">Start</span><span class="nudge"><button data-k="s" data-d="-1">−</button><b class="sv">${t(c.start)}</b><button data-k="s" data-d="1">+</button></span>
+      <span class="eyebrow">End</span><span class="nudge"><button data-k="e" data-d="-1">−</button><b class="ev">${t(c.end)}</b><button data-k="e" data-d="1">+</button></span></div></div>
+    <div class="sec"><h3>Look</h3>
+      <div class="row"><span class="eyebrow">Layout</span><select class="lay"><option value="fill">Fill the screen (follows the face)</option><option value="card">Card with hook on top</option><option value="brand">Whole frame on a colour</option><option value="blur">Whole frame on blur</option></select></div>
+      <div class="row zm"><span class="eyebrow">Zoom</span><input type="range" class="zoom" min="1" max="1.6" step="0.05" value="${c.zoom||1}"><b class="zv">${c.zoom||1}×</b></div>
+      <div class="row bgr"><span class="eyebrow">Colour</span><input type="color" class="bgc" value="${c.bg||"#FED50C"}"><input type="text" class="bgh" size="8" value="${c.bg||"#FED50C"}" aria-label="Colour code">
+        ${["#FED50C","#111111","#ffffff","#1b2a49","#c0392b"].map(x=>`<button type="button" class="sw" data-c="${x}" style="background:${x}" aria-label="${x}"></button>`).join("")}</div>
+      <div class="row hookrow"><span class="eyebrow">Hook headline<small class="req"></small></span><input type="text" class="hook" value="${esc(c.hook)}" placeholder="Type a hook, or pick a suggestion">
+        <div class="row sug">${(c.hook_options||[]).map(o=>`<button type="button" class="ghost pick">${esc(o)}</button>`).join("")}</div></div>
+      <div class="row"><span class="eyebrow">Captions</span><select class="cap"><option value="original">Spoken words</option>${Object.keys(c.caption_sets||{}).map(k=>`<option value="set:${esc(k)}">${esc(k)}</option>`).join("")}<option value="none">No captions</option></select></div>
+      <div class="row"><button class="rr">Re-render this clip</button><span class="why rmsg"></span></div></div>
+    <div class="sec"><h3>Post</h3><textarea class="post" aria-label="Post caption">${esc(c.post||c.first_line||"")}</textarea>
+      <div class="actions"><label class="keep"><input type="checkbox" class="kp" ${c.keep===false?"":"checked"}> Keep</label><button class="ghost cp">Copy caption</button><a class="btn ghost dl" download="${c.id}.mp4" href="/clips/${c.id}.mp4?v=${c.v||0}">Download</a></div></div>
+  </div></div>`;
+  const q=s=>root.querySelector(s),lay=q(".lay");
+  lay.value=c.layout==="crop"?"fill":(c.layout||"fill");q(".cap").value=c.captions||"original";
+  const sync=()=>{const L=lay.value;q(".zm").style.display=(L==="fill"||L==="card")?"":"none";q(".bgr").style.display=(L==="brand"||L==="card")?"":"none";q(".req").textContent=L==="card"?"(required for this layout)":"(optional)"};sync();lay.onchange=sync;
+  q(".zoom").oninput=e=>q(".zv").textContent=e.target.value+"×";
+  const setc=v=>{q(".bgh").value=v;if(/^#[0-9a-f]{6}$/i.test(v))q(".bgc").value=v};
+  q(".bgc").oninput=e=>setc(e.target.value);q(".bgh").oninput=e=>setc(e.target.value);root.querySelectorAll(".sw").forEach(b=>b.onclick=()=>setc(b.dataset.c));
+  root.querySelectorAll(".pick").forEach(b=>b.onclick=()=>q(".hook").value=b.textContent);
+  q(".title").onchange=e=>{c.title=e.target.value;post("/api/save",{id:c.id,title:c.title})};
+  q(".post").onchange=e=>{c.post=e.target.value;post("/api/save",{id:c.id,post:c.post})};
+  q(".kp").onchange=e=>{c.keep=e.target.checked;post("/api/save",{id:c.id,keep:c.keep});zipLabel()};
+  q(".cp").onclick=e=>{navigator.clipboard.writeText(q(".post").value);e.target.textContent="Copied";setTimeout(()=>e.target.textContent="Copy caption",1200)};
+  root.querySelectorAll(".nudge button").forEach(b=>b.onclick=()=>{c[b.dataset.k==="s"?"start":"end"]+=+b.dataset.d;q(".sv").textContent=t(c.start);q(".ev").textContent=t(c.end);q(".rmsg").textContent="Trim changed. Re-render to see it."});
+  q(".prev").onclick=()=>location.hash="#/"+clips[i-1].id;q(".next").onclick=()=>location.hash="#/"+clips[i+1].id;
+  q(".rr").onclick=async e=>{const b=e.target;
+    if(lay.value==="card"&&!q(".hook").value.trim()){q(".hook").focus();q(".req").textContent="(required: write or pick a hook)";return}
+    b.disabled=true;b.textContent="Rendering…";q(".vid").classList.add("busy");
+    const n=await post("/api/rerender",{id:c.id,start:c.start,end:c.end,layout:lay.value,zoom:+q(".zoom").value,bg:q(".bgh").value,hook:q(".hook").value.trim(),captions:q(".cap").value});
+    Object.assign(c,n);c.v=n.v;drawEditor(c.id)};
+  window.scrollTo(0,0);
+}
+function route(){const id=cur();$("#zip").style.display="";id?drawEditor(id):drawList()}
+window.addEventListener("hashchange",route);
+fetch("/api/state").then(r=>r.json()).then(s=>{clips=s.clips;meta=s.meta;route()});
 </script></body></html>

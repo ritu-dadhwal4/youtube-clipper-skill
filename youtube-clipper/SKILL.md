@@ -86,7 +86,7 @@ Write `<folder>/clips.json`, best first:
 
 ## Step 6 - Open the page
 
-`python3 scripts/picker.py <folder>` (runs in the background; opens http://127.0.0.1:8765). Tell the user: preview each clip, nudge start/end with +/- and press **Re-render**, switch layout, zoom, colour, hook headline and caption language, untick **Keep** to drop one, download single clips or the zip. Stop the page with Ctrl+C when done.
+`python3 scripts/picker.py <folder>` (runs in the background; opens http://127.0.0.1:8765). Tell the user: the page opens on a grid of all clips (tick Keep, hover to preview); **Edit** opens one clip with the video on the left and the options on the right: nudge start/end with +/-, press **Re-render**, switch layout, zoom, colour, hook headline and caption language, untick **Keep** to drop one, download single clips or the zip. Stop the page with Ctrl+C when done.
 
 ## Step 7 - Report
 
