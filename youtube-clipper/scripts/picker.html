@@ -55,7 +55,7 @@ hr.sep{border:0;border-top:1px solid var(--hair-soft);margin:0}
 /* editor view */
 .ed{display:grid;grid-template-columns:minmax(300px,420px) minmax(0,1fr);gap:32px;max-width:1180px;margin:0 auto;padding:24px 24px 64px;align-items:start}
 .ed .left{position:sticky;top:92px}
-.ed .vid{max-height:calc(100vh - 150px);width:auto;margin:0 auto;aspect-ratio:9/16;height:calc(100vh - 150px)}
+.ed .vid{width:min(100%,calc((100vh - 150px)*9/16));margin:0 auto;aspect-ratio:9/16;height:auto}
 .ed .vid.busy::after{content:"Rendering…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.8);font:600 15px Geist}
 .ed .right{display:flex;flex-direction:column;gap:18px;min-width:0}
 .crumb{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
@@ -64,7 +64,7 @@ hr.sep{border:0;border-top:1px solid var(--hair-soft);margin:0}
 .sec h3{font:400 12px var(--mono);letter-spacing:.13em;text-transform:uppercase;color:rgb(var(--ink3))}
 .ed .title{font-size:24px;letter-spacing:-.02em;padding:6px 10px;margin:0 -10px}
 .ed .row>span:first-child{min-width:78px}
-@media(max-width:860px){.ed{grid-template-columns:1fr;gap:16px;padding:16px}.ed .left{position:static}.ed .vid{height:auto;max-height:70vh}}
+@media(max-width:860px){.ed{grid-template-columns:1fr;gap:16px;padding:16px}.ed .left{position:static}.ed .vid{width:min(100%,calc(70vh*9/16))}}
 </style></head><body>
 <header><a class="brand" href="#" style="text-decoration:none"><i></i>Above Yellow</a><div class="ttl"><b>Your clips</b><span id="sub"></span></div><a class="btn" href="/api/zip" id="zip">Download kept clips (zip)</a></header>
 <div id="view"></div>
