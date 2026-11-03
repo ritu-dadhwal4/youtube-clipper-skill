@@ -6,7 +6,7 @@ Give Claude one long video (a YouTube link or a file). It reads what was said, p
 - A 1-hour video usually gives **8–15 good clips** (default: 10). Quality drops after that.
 - Clips are 30–60 seconds, start on a hook and end on a finished thought.
 - **Four layouts:** fill the screen (follows the speaker's face, optional zoom), a card with a hook headline on top, the whole frame on a colour you choose (any colour code), or the whole frame on blur.
-- **Captions your way:** spoken words with the word highlighted, or an English, Hinglish or Hindi translation, or none. Pick the language in the editor; the page translates it for you using your own Claude Code (it needs the `claude` command, and uses a little of your plan).
+- **Captions your way:** spoken words with the word highlighted, or an English, Hinglish or Hindi translation, or none. Pick the language in the editor; the page translates it for you using your own Claude Code (it needs the `claude` command. Each translation or set of hook ideas is one small request, about 1,000 to 3,000 tokens of your Claude plan, and is saved so it is never repeated for that clip).
 - **Hook headlines:** Claude suggests options for every clip; you pick or write your own.
 - Everything runs on your own computer. Nothing is uploaded anywhere.
 

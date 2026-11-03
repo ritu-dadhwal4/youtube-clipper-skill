@@ -20,7 +20,9 @@ def ask_claude(prompt):
     if not exe:
         raise RuntimeError("Claude Code's 'claude' command was not found, so the page cannot translate. Ask Claude in your chat instead.")
     for model in ("sonnet", None):
-        cmd = [exe, "-p"] + (["--model", model] if model else [])
+        # lean call: no tools, skills, MCP servers or project settings, so only the question itself is sent (about 1k tokens)
+        cmd = [exe, "-p", "--tools", "", "--disable-slash-commands", "--strict-mcp-config", "--setting-sources", "",
+               "--system-prompt", "You write and translate short video captions. Reply with only what is asked."] + (["--model", model] if model else [])
         r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=180)
         if r.returncode == 0 and r.stdout.strip():
             return r.stdout
@@ -30,6 +32,16 @@ def ask_claude(prompt):
 def json_list(text):
     m = re.search(r"\[.*\]", text, re.S)
     return json.loads(m.group(0)) if m else []
+
+
+def numbered(text):
+    """Parse '1. line' answers; far more forgiving than JSON when the text contains quote marks."""
+    out = {}
+    for ln in text.splitlines():
+        m = re.match(r"\s*(\d+)\s*[.):-]\s*(.+?)\s*$", ln)
+        if m:
+            out[int(m.group(1))] = m.group(2).strip().strip('"')
+    return [out[k] for k in sorted(out)]
 
 
 def caption_lines(words, start, end, max_words=6):
@@ -58,12 +70,12 @@ LANG_NOTE = {"English": "English", "Hindi": "Hindi in Devanagari script", "Hingl
 
 def translate_clip(d, c, lang):
     lines = caption_lines(load(d / "words.json", []), c["start"], c["end"])
-    numbered = "\n".join(f"{i + 1}. {l['orig']}" for i, l in enumerate(lines))
-    out = json_list(ask_claude(
+    numbered_in = "\n".join(f"{i + 1}. {l['orig']}" for i, l in enumerate(lines))
+    out = numbered(ask_claude(
         f"These are numbered caption lines from a short video clip, in the original spoken language. Rewrite every line in {LANG_NOTE[lang]}.\n"
         "Rules: keep each line's meaning exactly (no added or dropped ideas, no softening); keep names, brands and numbers; "
         "keep each line short, at most 6 words or 32 characters where the meaning allows; one output line per input line, same order.\n"
-        f"Reply with ONLY a JSON array of exactly {len(lines)} strings, nothing else.\n\n{numbered}"))
+        f"Reply with exactly {len(lines)} lines in the form '1. text', '2. text' and so on, nothing else.\n\n{numbered_in}"))
     if len(out) != len(lines):
         raise RuntimeError(f"Claude returned {len(out)} lines for {len(lines)}; try again.")
     return [{"s": l["s"], "e": l["e"], "t": str(t)} for l, t in zip(lines, out)]
@@ -72,10 +84,11 @@ def translate_clip(d, c, lang):
 def hooks_for(d, c, lang):
     text = " ".join(l["orig"] for l in caption_lines(load(d / "words.json", []), c["start"], c["end"]))
     where = "the same language as the clip is spoken in" if lang == "Original" else LANG_NOTE[lang]
-    return [str(x) for x in json_list(ask_claude(
+    raw = ask_claude(
         f"Write 3 hook headlines for a short vertical video clip, in {where}. Each at most 8 words, made to make someone stop scrolling: "
         "a claim, a question or a number. They must be true to what is said in the clip; no false promises. "
-        f"Reply with ONLY a JSON array of 3 strings.\n\nClip transcript:\n{text}"))][:3]
+        f"Reply with exactly 3 lines in the form '1. headline', '2. headline', '3. headline', nothing else.\n\nClip transcript:\n{text}")
+    return numbered(raw)[:3]
 
 
 def make_handler(d):
